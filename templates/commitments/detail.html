@@ -1,0 +1,204 @@
+{% extends "base.html" %}
+{% block title %}{{ commitment.title }} - PTIT{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('commitments_list') }}">Cam kết</a></li>
+        <li class="breadcrumb-item active">Chi tiết</li>
+    </ol>
+</nav>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="fas fa-handshake me-2"></i>{{ commitment.title }}
+                </h5>
+                {% if commitment.status == 'Hoàn thành' %}
+                <span class="badge bg-success">{{ commitment.status }}</span>
+                {% elif commitment.status == 'Quá hạn' %}
+                <span class="badge bg-danger">{{ commitment.status }}</span>
+                {% elif commitment.status == 'Đang thực hiện' %}
+                <span class="badge bg-primary">{{ commitment.status }}</span>
+                {% else %}
+                <span class="badge bg-secondary">{{ commitment.status }}</span>
+                {% endif %}
+            </div>
+            <div class="card-body">
+                {% if current_user.is_admin() %}
+                <div class="mb-3">
+                    <strong>Lab:</strong> <span class="badge bg-lab">{{ commitment.lab.name }}</span>
+                </div>
+                <div class="mb-3">
+                    <strong>Người phụ trách:</strong>
+                    {% if commitment.assignee %}
+                    <span class="badge bg-info">{{ commitment.assignee.username }}</span>
+                    {% else %}
+                    <span class="text-muted">Chưa giao cho ai</span>
+                    {% endif %}
+                </div>
+                {% endif %}
+
+                <div class="mb-3">
+                    <strong>Mô tả:</strong>
+                    <p>{{ commitment.description or 'Không có mô tả' }}</p>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="info-item">
+                            <i class="fas fa-calendar-start me-2"></i>
+                            <strong>Ngày bắt đầu:</strong> {{ commitment.start_date.strftime('%d/%m/%Y') }}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="info-item">
+                            <i class="fas fa-calendar-end me-2"></i>
+                            <strong>Hạn hoàn thành:</strong> {{ commitment.deadline.strftime('%d/%m/%Y') }}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-4">
+                    <div class="d-flex justify-content-between mb-2">
+                        <strong>Tiến độ:</strong>
+                        <span class="text-primary">{{ commitment.progress }}%</span>
+                    </div>
+                    <div class="progress" style="height: 20px;">
+                        <div class="progress-bar bg-{{ 'success' if commitment.progress >= 100 else 'primary' }}"
+                             style="width: {{ commitment.progress }}%">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer">
+                <a href="{{ url_for('progress_update', commitment_id=commitment.id) }}"
+                   class="btn btn-success">
+                    <i class="fas fa-edit me-2"></i>Cập nhật tiến độ
+                </a>
+                {% if current_user.is_admin() %}
+                <a href="{{ url_for('commitments_edit', commitment_id=commitment.id) }}"
+                   class="btn btn-warning">
+                    <i class="fas fa-cog me-2"></i>Chỉnh sửa
+                </a>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-history me-2"></i>Lịch sử cập nhật
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if updates %}
+                <div class="timeline">
+                    {% for update in updates %}
+                    <div class="timeline-item">
+                        <div class="timeline-marker bg-{{ 'success' if update.progress >= commitment.progress else 'primary' }}"></div>
+                        <div class="timeline-content">
+                            <div class="d-flex justify-content-between">
+                                <strong>{{ update.progress }}%</strong>
+                                <small class="text-muted">{{ update.created_at.strftime('%d/%m/%Y %H:%M') }}</small>
+                            </div>
+                            <p class="mb-1">{{ update.notes or 'Không có ghi chú' }}</p>
+                            <small class="text-muted">
+                                <i class="fas fa-user me-1"></i>{{ update.creator.username }}
+                            </small>
+                            {% if update.attachment %}
+                            <div class="mt-2">
+                                <a href="{{ url_for('download_file', filename=update.attachment) }}"
+                                   class="btn btn-outline-secondary btn-sm"
+                                   title="Tải xuống tệp đính kèm">
+                                    <i class="fas fa-paperclip me-1"></i>{{ update.attachment.split('_', 1)[1] if '_' in update.attachment else update.attachment }}
+                                </a>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-center text-muted">
+                    <i class="fas fa-inbox fa-2x mb-2"></i><br>
+                    Chưa có cập nhật nào
+                </p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-pie me-2"></i>Thống kê
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="stat-mini">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Ngày tạo:</span>
+                        <strong>{{ commitment.created_at.strftime('%d/%m/%Y') }}</strong>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Cập nhật lần cuối:</span>
+                        <strong>{{ commitment.updated_at.strftime('%d/%m/%Y') }}</strong>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <span>Số lần cập nhật:</span>
+                        <strong>{{ updates|length }}</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-line me-2"></i>Biểu đồ tiến độ
+                </h5>
+            </div>
+            <div class="card-body">
+                <canvas id="timelineChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    fetch(`/api/commitments/{{ commitment.id }}/timeline`)
+        .then(response => response.json())
+        .then(data => {
+            const ctx = document.getElementById('timelineChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.map(d => new Date(d.date).toLocaleDateString('vi-VN')),
+                    datasets: [{
+                        label: 'Tiến độ (%)',
+                        data: data.map(d => d.progress),
+                        borderColor: '#0d6efd',
+                        backgroundColor: 'rgba(13, 110, 253, 0.1)',
+                        fill: true,
+                        tension: 0.3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { beginAtZero: true, max: 100 }
+                    }
+                }
+            });
+        });
+});
+</script>
+{% endblock %}

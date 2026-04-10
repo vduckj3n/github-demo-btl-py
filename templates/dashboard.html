@@ -1,0 +1,217 @@
+{% extends "base.html" %}
+{% block title %}Dashboard - PTIT{% endblock %}
+
+{% block content %}
+<h1 class="page-title">
+    <i class="fas fa-chart-line me-3"></i>Dashboard
+    {% if not current_user.is_admin() and current_user.lab %}
+    <small class="text-muted">| {{ current_user.lab.name }}</small>
+    {% endif %}
+</h1>
+
+<!-- Stats Cards -->
+<div class="row g-4 mb-4">
+    <div class="col-md-6 col-xl-3">
+        <div class="stat-card stat-total">
+            <div class="stat-icon">
+                <i class="fas fa-handshake"></i>
+            </div>
+            <div class="stat-info">
+                <h3>{{ total }}</h3>
+                <p>Tổng cam kết</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 col-xl-3">
+        <div class="stat-card stat-active">
+            <div class="stat-icon">
+                <i class="fas fa-spinner"></i>
+            </div>
+            <div class="stat-info">
+                <h3>{{ active }}</h3>
+                <p>Đang thực hiện</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 col-xl-3">
+        <div class="stat-card stat-completed">
+            <div class="stat-icon">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <div class="stat-info">
+                <h3>{{ completed }}</h3>
+                <p>Hoàn thành</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 col-xl-3">
+        <div class="stat-card stat-overdue">
+            <div class="stat-icon">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <div class="stat-info">
+                <h3>{{ overdue }}</h3>
+                <p>Quá hạn</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Row -->
+<div class="row g-4 mb-4">
+    {% if current_user.is_admin() %}
+    <div class="col-lg-6">
+        <div class="chart-card">
+            <h5 class="chart-title">
+                <i class="fas fa-chart-pie me-2"></i>Phân bố theo trạng thái
+            </h5>
+            <canvas id="statusChart"></canvas>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="chart-card">
+            <h5 class="chart-title">
+                <i class="fas fa-chart-bar me-2"></i>Cam kết theo Lab
+            </h5>
+            <canvas id="labChart"></canvas>
+        </div>
+    </div>
+    {% else %}
+    <div class="col-lg-6">
+        <div class="chart-card">
+            <h5 class="chart-title">
+                <i class="fas fa-chart-pie me-2"></i>Tiến độ của Lab
+            </h5>
+            <canvas id="statusChart"></canvas>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Recent Commitments -->
+<div class="chart-card">
+    <h5 class="chart-title">
+        <i class="fas fa-history me-2"></i>Cam kết gần đây
+    </h5>
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>Tiêu đề</th>
+                    {% if current_user.is_admin() %}
+                    <th>Lab</th>
+                    {% endif %}
+                    <th>Tiến độ</th>
+                    <th>Hạn</th>
+                    <th>Trạng thái</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for commit in recent %}
+                <tr>
+                    <td>{{ commit.title }}</td>
+                    {% if current_user.is_admin() %}
+                    <td>
+                        <span class="badge bg-lab">{{ commit.lab.name }}</span>
+                    </td>
+                    {% endif %}
+                    <td>
+                        <div class="progress-wrapper">
+                            <div class="progress">
+                                <div class="progress-bar bg-{{ 'success' if commit.progress >= 100 else 'primary' }}"
+                                     style="width: {{ commit.progress }}%">
+                                </div>
+                            </div>
+                            <span class="progress-text">{{ commit.progress }}%</span>
+                        </div>
+                    </td>
+                    <td>{{ commit.deadline.strftime('%d/%m/%Y') }}</td>
+                    <td>
+                        {% if commit.status == 'Hoàn thành' %}
+                        <span class="badge bg-success">{{ commit.status }}</span>
+                        {% elif commit.status == 'Quá hạn' %}
+                        <span class="badge bg-danger">{{ commit.status }}</span>
+                        {% elif commit.status == 'Đang thực hiện' %}
+                        <span class="badge bg-primary">{{ commit.status }}</span>
+                        {% else %}
+                        <span class="badge bg-secondary">{{ commit.status }}</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="{{ url_for('commitments_detail', commitment_id=commit.id) }}"
+                           class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-eye"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="5" class="text-center text-muted py-4">
+                        <i class="fas fa-inbox fa-3x mb-3"></i>
+                        <p>Chưa có cam kết nào</p>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Status Chart
+    const statusCtx = document.getElementById('statusChart').getContext('2d');
+    new Chart(statusCtx, {
+        type: 'doughnut',
+        data: {
+            labels: {{ status_chart.labels | tojson }},
+            datasets: [{
+                data: {{ status_chart.data | tojson }},
+                backgroundColor: ['#6c757d', '#0d6efd', '#198754', '#dc3545'],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+
+    {% if current_user.is_admin() and commitments_by_lab %}
+    // Lab Chart
+    const labCtx = document.getElementById('labChart').getContext('2d');
+    new Chart(labCtx, {
+        type: 'bar',
+        data: {
+            labels: {{ commitments_by_lab | map(attribute='name') | list | tojson }},
+            datasets: [{
+                label: 'Số cam kết',
+                data: {{ commitments_by_lab | map(attribute='count') | list | tojson }},
+                backgroundColor: '#0d6efd',
+                borderRadius: 8
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: { stepSize: 1 }
+                }
+            }
+        }
+    });
+    {% endif %}
+});
+</script>
+{% endblock %}

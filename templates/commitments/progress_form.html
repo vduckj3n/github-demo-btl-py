@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+{% block title %}Cập nhật tiến độ - PTIT{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('commitments_list') }}">Cam kết</a></li>
+        <li class="breadcrumb-item"><a href="{{ url_for('commitments_detail', commitment_id=commitment.id) }}">{{ commitment.title }}</a></li>
+        <li class="breadcrumb-item active">Cập nhật tiến độ</li>
+    </ol>
+</nav>
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-edit me-2"></i>Cập nhật tiến độ
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info mb-4">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong>Tiến độ hiện tại:</strong> {{ commitment.progress }}%
+                        </div>
+                        <div>
+                            {% if commitment.status == 'Hoàn thành' %}
+                            <span class="badge bg-success">{{ commitment.status }}</span>
+                            {% elif commitment.status == 'Quá hạn' %}
+                            <span class="badge bg-danger">{{ commitment.status }}</span>
+                            {% elif commitment.status == 'Đang thực hiện' %}
+                            <span class="badge bg-primary">{{ commitment.status }}</span>
+                            {% else %}
+                            <span class="badge bg-secondary">{{ commitment.status }}</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <form method="POST" enctype="multipart/form-data">
+                    <div class="mb-4">
+                        <label for="progress" class="form-label">
+                            Tiến độ mới <span class="text-danger">*</span>
+                        </label>
+                        <div class="d-flex align-items-center gap-3">
+                            <input type="range" class="form-range flex-grow-1"
+                                   id="progress" name="progress" min="0" max="100"
+                                   value="{{ commitment.progress }}" required>
+                            <span class="progress-value badge bg-primary">{{ commitment.progress }}%</span>
+                        </div>
+                        <div class="form-text">Kéo thanh trượt hoặc nhập số để cập nhật tiến độ</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="notes" class="form-label">Ghi chú</label>
+                        <textarea class="form-control" id="notes" name="notes" rows="3"
+                                  placeholder="Mô tả chi tiết tiến độ đã đạt được..."></textarea>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="attachment" class="form-label">File đính kèm</label>
+                        <input type="file" class="form-control" id="attachment" name="attachment">
+                        <div class="form-text">Hỗ trợ: PDF, DOC, DOCX, XLS, XLSX, JPG, PNG (tối đa 16MB)</div>
+                    </div>
+
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ url_for('commitments_detail', commitment_id=commitment.id) }}"
+                           class="btn btn-secondary">
+                            <i class="fas fa-arrow-left me-2"></i>Quay lại
+                        </a>
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-save me-2"></i>Lưu tiến độ
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const progressInput = document.getElementById('progress');
+    const progressValue = document.querySelector('.progress-value');
+
+    progressInput.addEventListener('input', function() {
+        progressValue.textContent = this.value + '%';
+        progressValue.classList.remove('bg-primary', 'bg-success', 'bg-warning', 'bg-danger');
+        if (this.value >= 100) {
+            progressValue.classList.add('bg-success');
+        } else if (this.value >= 50) {
+            progressValue.classList.add('bg-primary');
+        } else if (this.value >= 25) {
+            progressValue.classList.add('bg-warning');
+        } else {
+            progressValue.classList.add('bg-primary');
+        }
+    });
+});
+</script>
+{% endblock %}
