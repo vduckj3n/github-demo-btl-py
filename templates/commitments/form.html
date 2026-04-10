@@ -19,6 +19,7 @@
             </div>
             <div class="card-body">
                 <form method="POST">
+                    <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
                     {% if current_user.is_admin() %}
                     <div class="mb-3">
                         <label for="lab_id" class="form-label">Lab thực hiện <span class="text-danger">*</span></label>
@@ -31,11 +32,12 @@
                             {% endfor %}
                         </select>
                     </div>
+                    {% endif %}
 
                     <div class="mb-3">
-                        <label for="assigned_to" class="form-label">Giao cho User</label>
-                        <select class="form-select" id="assigned_to" name="assigned_to">
-                            <option value="">-- Chọn User (không bắt buộc) --</option>
+                        <label for="assigned_to" class="form-label">Giao cho User <span class="text-danger">*</span></label>
+                        <select class="form-select" id="assigned_to" name="assigned_to" required>
+                            <option value="">-- Chọn User --</option>
                             {% if lab_users %}
                                 {% for user in lab_users %}
                                 <option value="{{ user.id }}" {% if commitment and commitment.assigned_to == user.id %}selected{% endif %}>
@@ -44,9 +46,8 @@
                                 {% endfor %}
                             {% endif %}
                         </select>
-                        <small class="form-text text-muted">Chỉ định user cụ thể phụ trách task này</small>
+                        <small class="form-text text-muted">Bắt buộc chọn user chịu trách nhiệm cho cam kết này.</small>
                     </div>
-                    {% endif %}
 
                     <div class="mb-3">
                         <label for="title" class="form-label">Tiêu đề cam kết <span class="text-danger">*</span></label>
@@ -101,14 +102,14 @@ document.addEventListener('DOMContentLoaded', function() {
         userSelect.innerHTML = '<option value="">-- Đang tải... --</option>';
 
         if (!labId) {
-            userSelect.innerHTML = '<option value="">-- Chọn User (không bắt buộc) --</option>';
+            userSelect.innerHTML = '<option value="">-- Chọn User --</option>';
             return;
         }
 
         fetch(`/api/labs/${labId}/users`)
             .then(response => response.json())
             .then(users => {
-                userSelect.innerHTML = '<option value="">-- Chọn User (không bắt buộc) --</option>';
+                userSelect.innerHTML = '<option value="">-- Chọn User --</option>';
                 users.forEach(user => {
                     const option = document.createElement('option');
                     option.value = user.id;

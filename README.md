@@ -4,19 +4,40 @@ A Flask application for managing lab progress and commitments using Flask + SQLi
 
 ## Prerequisites
 
-- Python 3.10+
-- Windows/Linux/Mac
+- Python 3.10+ (recommended Python 3.13)
+- Git (optional)
+- Windows / Linux / Mac
 
 ## Installation
 
-1. Clone the repository
-2. Create virtual environment:
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/your-repo/your-project.git
+   cd BTL_PYTHON_NEW-main
    ```
-   python -m venv .venv
-   .venv\Scripts\activate  # On Windows
+
+2. Create and activate the virtual environment:
+
+   On Windows (PowerShell):
+   ```powershell
+   py -3.13 -m venv .venv
+   .\.venv\Scripts\Activate.ps1
    ```
-3. Install dependencies:
+
+   On Windows (Command Prompt):
+   ```cmd
+   py -3.13 -m venv .venv
+   .venv\Scripts\activate.bat
    ```
+
+   On macOS / Linux:
+   ```bash
+   python3 -m venv .venv
+   source .venv/bin/activate
+   ```
+
+3. Install Python dependencies:
+   ```bash
    pip install -r requirements.txt
    ```
 
@@ -24,36 +45,84 @@ A Flask application for managing lab progress and commitments using Flask + SQLi
 
 The database and default admin user will be created automatically on first run.
 
-Set environment variables and run:
+### Option 1: Run directly with Python
 
+```bash
+python app.py
 ```
+
+### Option 2: Run with Flask CLI
+
+On Windows PowerShell:
+```powershell
+$env:FLASK_APP = 'app.py'
+$env:FLASK_ENV = 'development'
+flask run --host=0.0.0.0 --port=5000
+```
+
+On Windows Command Prompt:
+```cmd
 set FLASK_APP=app.py
 set FLASK_ENV=development
 flask run --host=0.0.0.0 --port=5000
 ```
 
-Or simply:
+On macOS / Linux:
+```bash
+export FLASK_APP=app.py
+export FLASK_ENV=development
+flask run --host=0.0.0.0 --port=5000
+```
+
+Open the app in your browser at:
 
 ```
-python app.py
+http://127.0.0.1:5000/
 ```
-
-Access at http://127.0.0.1:5000/
 
 ## Default Credentials
 
-- Admin: admin / admin123
+- Admin username: `admin`
+- Admin password: `admin123`
+
+> If the default admin user is not created automatically, run the app once and check the `instance/` database file.
+
+## Useful Commands
+
+- Install/update dependencies:
+  ```bash
+  pip install -r requirements.txt
+  ```
+
+- Run the app:
+  ```bash
+  python app.py
+  ```
+
+- Run database or migration helpers if needed:
+  ```bash
+  python app.py
+  ```
 
 ## Configuration
 
-- `config.py`: Contains SECRET_KEY, SQLALCHEMY_DATABASE_URI (SQLite file: instance/ptit_lab_progress.db), UPLOAD_FOLDER (uploads/)
+- `config.py` contains app settings:
+  - `SECRET_KEY`
+  - `SQLALCHEMY_DATABASE_URI` (default SQLite file: `instance/ptit_lab_progress.db`)
+  - `UPLOAD_FOLDER` (default `uploads/`)
 
 ## Project Structure
 
-- `app.py`: Main application file
-- `models.py`: Database models
-- `config.py`: Configuration
-- `templates/`: HTML templates
-- `static/`: CSS, JS files
-- `instance/`: Database file
-- `uploads/`: Uploaded files
+- `app.py` — Main application and routes
+- `models.py` — Database models
+- `config.py` — App configuration
+- `templates/` — HTML templates
+- `static/` — CSS and JavaScript files
+- `instance/` — SQLite database file
+- `uploads/` — Uploaded files
+
+## Notes
+
+- Make sure your virtual environment is activated before running any commands.
+- If you see a font issue in generated PDF, install `reportlab` via `pip install reportlab`.
+- Use `py -3.13` or `python` pointing to the same Python interpreter used for the virtualenv.

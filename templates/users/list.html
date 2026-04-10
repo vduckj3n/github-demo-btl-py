@@ -54,6 +54,7 @@
                             <form method="POST" action="{{ url_for('users_delete', user_id=user.id) }}"
                                   style="display: inline;"
                                   onsubmit="return confirm('Bạn có chắc muốn xóa user &quot;{{ user.username }}&quot;?');">
+                                <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
                                 <button type="submit" class="btn btn-sm btn-danger">
                                     <i class="fas fa-trash"></i>
                                 </button>

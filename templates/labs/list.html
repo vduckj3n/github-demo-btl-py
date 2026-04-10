@@ -47,6 +47,7 @@
                             <form method="POST" action="{{ url_for('labs_delete', lab_id=lab.id) }}"
                                   style="display: inline;"
                                   onsubmit="return confirm('Bạn có chắc muốn xóa Lab &quot;{{ lab.name }}&quot;?\nHành động này sẽ xóa tất cả cam kết liên quan!');">
+                                <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
                                 <button type="submit" class="btn btn-sm btn-danger">
                                     <i class="fas fa-trash"></i>
                                 </button>

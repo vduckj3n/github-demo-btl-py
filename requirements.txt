@@ -3,3 +3,5 @@ Flask-SQLAlchemy==3.1.1
 Flask-Login==0.6.3
 Flask-Bcrypt==1.0.1
 Werkzeug==3.0.1
+openpyxl>=3.1.0      # Optional: for Excel export (CSV works without it)
+reportlab>=4.0.0    # Optional: for PDF export (CSV fallback works without it)

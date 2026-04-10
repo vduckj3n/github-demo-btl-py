@@ -88,6 +88,13 @@
     {% endif %}
 </div>
 
+{% if upcoming %}
+<div class="alert alert-warning mb-4">
+    <i class="fas fa-clock me-2"></i>
+    <strong>Cảnh báo:</strong> Có {{ upcoming|length }} cam kết sắp đến hạn trong 7 ngày tới!
+</div>
+{% endif %}
+
 <!-- Recent Commitments -->
 <div class="chart-card">
     <h5 class="chart-title">

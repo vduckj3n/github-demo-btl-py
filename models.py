@@ -60,7 +60,7 @@ class Commitment(db.Model):
         today = datetime.utcnow().date()
         if self.progress >= 100:
             self.status = 'Hoàn thành'
-        elif self.deadline < today and self.progress < 100:
+        elif self.deadline < today:
             self.status = 'Quá hạn'
         elif self.progress > 0:
             self.status = 'Đang thực hiện'
@@ -79,3 +79,91 @@ class ProgressUpdate(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     creator = db.relationship('User', backref='progress_updates')
+
+
+class Notification(db.Model):
+    __tablename__ = 'notifications'
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    title = db.Column(db.String(200), nullable=False)
+    message = db.Column(db.Text, nullable=False)
+    type = db.Column(db.String(20), default='info')  # info, warning, success, danger
+    is_read = db.Column(db.Boolean, default=False)
+    link = db.Column(db.String(200))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    user = db.relationship('User', backref='notifications')
+
+    @staticmethod
+    def create(user_id, title, message, type='info', link=None):
+        notif = Notification(user_id=user_id, title=title, message=message, type=type, link=link)
+        db.session.add(notif)
+        return notif
+
+    @staticmethod
+    def notify_assignment(commitment, user_id):
+        """Notify when a commitment is assigned to a user"""
+        from flask import url_for
+        title = f"Công việc mới được giao: {commitment.title}"
+        message = f"Bạn được giao phụ trách cam kết '{commitment.title}' với deadline {commitment.deadline.strftime('%d/%m/%Y')}"
+        link = url_for('commitments_detail', commitment_id=commitment.id)
+        return Notification.create(user_id, title, message, 'info', link)
+
+    @staticmethod
+    def notify_deadline_approaching(commitment, days_left, user_id):
+        """Notify when deadline is approaching (3, 7 days)"""
+        from flask import url_for
+        if days_left <= 0:
+            return None
+        title = f"Cảnh báo: {commitment.title} sắp hết hạn"
+        message = f"Cam kết '{commitment.title}' còn {days_left} ngày đến deadline ({commitment.deadline.strftime('%d/%m/%Y')})"
+        link = url_for('commitments_detail', commitment_id=commitment.id)
+        return Notification.create(user_id, title, message, 'warning', link)
+
+    @staticmethod
+    def notify_overdue(commitment, user_id):
+        """Notify when a commitment becomes overdue"""
+        from flask import url_for
+        title = f"Quá hạn: {commitment.title}"
+        message = f"Cam kết '{commitment.title}' đã quá hạn (deadline: {commitment.deadline.strftime('%d/%m/%Y')})"
+        link = url_for('commitments_detail', commitment_id=commitment.id)
+        return Notification.create(user_id, title, message, 'danger', link)
+
+    @staticmethod
+    def notify_completion(commitment, user_id):
+        """Notify when a commitment is completed"""
+        from flask import url_for
+        assignee_name = commitment.assignee.username if commitment.assignee else 'Người dùng'
+        title = f"Cam kết hoàn thành: {commitment.title}"
+        message = f"{assignee_name} đã hoàn thành cam kết '{commitment.title}' vào deadline {commitment.deadline.strftime('%d/%m/%Y')}"
+        link = url_for('commitments_detail', commitment_id=commitment.id)
+        return Notification.create(user_id, title, message, 'success', link)
+
+
+class ActivityLog(db.Model):
+    __tablename__ = 'activity_logs'
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    action = db.Column(db.String(50), nullable=False)  # CREATE, UPDATE, DELETE, LOGIN, LOGOUT
+    entity_type = db.Column(db.String(50))  # Commitment, Lab, User, ProgressUpdate
+    entity_id = db.Column(db.Integer)
+    details = db.Column(db.Text)
+    ip_address = db.Column(db.String(50))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    user = db.relationship('User', backref='activity_logs')
+
+    @staticmethod
+    def log(user_id, action, entity_type=None, entity_id=None, details=None, ip_address=None):
+        log = ActivityLog(
+            user_id=user_id,
+            action=action,
+            entity_type=entity_type,
+            entity_id=entity_id,
+            details=details,
+            ip_address=ip_address
+        )
+        db.session.add(log)
+        return log
