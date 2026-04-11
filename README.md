@@ -12,8 +12,8 @@ A Flask application for managing lab progress and commitments using Flask + SQLi
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/your-repo/your-project.git
-   cd BTL_PYTHON_NEW-main
+   git clone https://github.com/vduckj3n/github-demo-btl-py.git
+   cd github-demo-btl-py
    ```
 
 2. Create and activate the virtual environment:

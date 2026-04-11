@@ -429,17 +429,22 @@ def users_delete(user_id):
 
     assigned_count = Commitment.query.filter_by(assigned_to=user.id).count()
     created_count = Commitment.query.filter_by(created_by=user.id).count()
-    notifications_count = Notification.query.filter_by(user_id=user.id).count()
     progress_updates_count = ProgressUpdate.query.filter_by(created_by=user.id).count()
-    activity_logs_count = ActivityLog.query.filter_by(user_id=user.id).count()
 
-    if assigned_count or created_count or notifications_count or progress_updates_count or activity_logs_count:
+    if assigned_count:
         flash(
-            'Không thể xóa User này vì hiện tại user đang có dữ liệu liên quan. ' 
-            'Vui lòng chuyển giao hoặc xóa các cam kết, thông báo, nhật ký hoặc tiến độ liên quan trước khi xóa.',
+            'Không thể xóa User này vì hiện tại user đang phụ trách các cam kết. ' 
+            'Vui lòng chuyển giao hoặc xóa các cam kết trước khi xóa.',
             'danger'
         )
         return redirect(url_for('users_list'))
+
+    # Disassociate nullable audit references so the user can be removed cleanly.
+    Commitment.query.filter_by(created_by=user.id).update({'created_by': None})
+    ProgressUpdate.query.filter_by(created_by=user.id).update({'created_by': None})
+    Notification.query.filter_by(user_id=user.id).delete()
+    ActivityLog.query.filter_by(user_id=user.id).delete()
+    db.session.commit()
 
     user_name = user.username
     db.session.delete(user)
@@ -902,7 +907,7 @@ def export_dashboard_to_pdf(summary_data, status_rows, lab_rows, upcoming_rows):
 
     elements = [
         Paragraph('BÁO CÁO TOÀN BỘ DASHBOARD', title_style),
-        Paragraph(f'Ngày tạo: {datetime.utcnow().strftime("%d/%m/%Y %H:%M")}', normal_style),
+        Paragraph(f'Ngày tạo: {datetime.now().strftime("%d/%m/%Y %H:%M")}', normal_style),
         Spacer(1, 12)
     ]
 
